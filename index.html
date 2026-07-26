@@ -1425,8 +1425,23 @@ function ensureBracket(t){
   if(!Array.isArray(t.bracket.sfWinner)) t.bracket.sfWinner = [null,null];
   if(typeof t.bracket.finalWinner === 'undefined') t.bracket.finalWinner = null;
 }
-function bqTeam(t, m, side){ return (t.bracket.teams[m*2+side] || '').trim(); }
-function bqIcon(t, m, side){ return t.bracket.teamIcons[m*2+side] || ''; }
+function bracketAutoParticipant(t, idx){
+  const list = Array.isArray(t.participants) ? t.participants : [];
+  return list[idx] || null;
+}
+function bqTeam(t, m, side){
+  const idx = m*2+side;
+  const manual = (t.bracket.teams[idx] || '').trim();
+  if(manual) return manual;
+  const p = bracketAutoParticipant(t, idx);
+  return p ? (p.displayName || p.username || '') : '';
+}
+function bqIcon(t, m, side){
+  const idx = m*2+side;
+  if(t.bracket.teamIcons[idx]) return t.bracket.teamIcons[idx];
+  const p = bracketAutoParticipant(t, idx);
+  return p ? (p.avatar || '') : '';
+}
 function bqWinnerName(t, m){
   const w = t.bracket.qfWinner[m];
   if(w===null || w===undefined) return null;
@@ -2344,7 +2359,10 @@ function openBracketEditor(id){
 }
 function renderBracketEditorContent(t){
   const be = document.getElementById('admin-bracket-editor');
-  const teamInput = (i)=>`<div><label>Équipe ${i+1}</label><input type="text" data-bteam="${i}" value="${escapeHtml(t.bracket.teams[i]||'')}" placeholder="Nom de l'équipe">
+  const teamInput = (i)=>{
+    const autoP = bracketAutoParticipant(t, i);
+    const placeholder = autoP ? `${autoP.displayName || autoP.username || ''} (via Discord)` : "Nom de l'équipe";
+    return `<div><label>Équipe ${i+1}</label><input type="text" data-bteam="${i}" value="${escapeHtml(t.bracket.teams[i]||'')}" placeholder="${escapeHtml(placeholder)}">
     <label class="upload-zone" for="bteam-icon-${i}" style="padding:.8rem;margin-top:.4rem;margin-bottom:0">
       <div class="upload-icon" style="width:32px;height:32px">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -2357,6 +2375,7 @@ function renderBracketEditorContent(t){
       <button type="button" class="icon-preview-remove" data-bteam-icon-remove="${i}" aria-label="Retirer l'image"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
   </div>`;
+  };
   const qfBlock = (m)=>{
     const a = bqTeam(t,m,0), b = bqTeam(t,m,1);
     return `<div class="full" style="border-top:1px solid #333;padding-top:.6rem;margin-top:.6rem">
