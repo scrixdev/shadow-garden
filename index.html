@@ -1299,6 +1299,8 @@ nav{
   </div>
 </div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
     <script>
 function goPage(page){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1786,6 +1788,76 @@ function renderAll(){
   renderEquipage();
 }
 renderAll();
+
+/* ============================================================
+   FIREBASE — le site LIT les tournois et actus depuis Firestore
+   (le bot Discord écrit dedans avec sa clé admin)
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAdLcxxmBZn9tVTuJnBMugiG5Xpf0lGvUw",
+  authDomain: "shadow-garden-44a14.firebaseapp.com",
+  projectId: "shadow-garden-44a14",
+  storageBucket: "shadow-garden-44a14.firebasestorage.app",
+  messagingSenderId: "510846993642",
+  appId: "1:510846993642:web:0b2e25ad827c10bbfc0393",
+  measurementId: "G-679T97N68J"
+};
+
+try{
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  function firestoreDocToTournoi(doc){
+    const t = doc.data();
+    return {
+      id: doc.id,
+      day: t.day || "",
+      month: t.month || "",
+      title: t.title || "",
+      desc: t.desc || "",
+      format: t.format || "",
+      level: t.level || "",
+      places: t.places || "",
+      reward: t.reward || "",
+      status: t.status || "Ouvertes",
+      finished: !!t.finished,
+      image: t.image || ""
+    };
+  }
+
+  function firestoreDocToNews(doc){
+    const n = doc.data();
+    return {
+      id: doc.id,
+      title: n.title || "",
+      date: n.date || "",
+      cat: n.cat || "",
+      image: n.image || ""
+    };
+  }
+
+  db.collection('tournois').orderBy('createdAt', 'desc').get()
+    .then(snap => {
+      if(!snap.empty){
+        data.tournois = snap.docs.map(firestoreDocToTournoi);
+        data.tournois.forEach(t => ensureBracket(t));
+        renderBrackets();
+        renderTournois();
+      }
+    })
+    .catch(err => console.error('Firestore (tournois) :', err));
+
+  db.collection('news').orderBy('createdAt', 'desc').get()
+    .then(snap => {
+      if(!snap.empty){
+        data.news = snap.docs.map(firestoreDocToNews);
+        renderNews();
+      }
+    })
+    .catch(err => console.error('Firestore (news) :', err));
+}catch(e){
+  console.error('Firebase init a échoué :', e);
+}
 
 /* ---------- CLASSEMENT (bracket) — modale plein écran publique ---------- */
 const bracketModalBackdrop = document.getElementById('bracket-modal-backdrop');
