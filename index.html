@@ -1676,15 +1676,6 @@ const ICON_GIFT = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" s
 const ICON_CHECK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>';
 const ICON_MEDAL = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12M15 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/></svg>';
 
-function renderParticipantsRow(t){
-  const list = Array.isArray(t.participants) ? t.participants : [];
-  if(!list.length){
-    return `<div style="margin-top:10px;font-size:12px;opacity:.6;">🎉 Aucun participant pour l'instant — inscription via le bouton sur Discord</div>`;
-  }
-  const shown = list.slice(0,8).map(p => `<img src="${escapeHtml(p.avatar||'')}" alt="" title="${escapeHtml(p.displayName||'')}" style="width:28px;height:28px;border-radius:50%;border:2px solid #111;margin-left:-8px;object-fit:cover;background:#222;">`).join('');
-  const extra = list.length > 8 ? `<span style="margin-left:8px;font-size:12px;opacity:.7;">+${list.length-8}</span>` : '';
-  return `<div style="display:flex;align-items:center;margin-top:10px;padding-left:8px;">${shown}${extra}<span style="margin-left:10px;font-size:12px;opacity:.85;">🎉 ${list.length} participant${list.length>1?'s':''}</span></div>`;
-}
 
 function renderTournois(){
   const list = document.getElementById('tournois-list');
@@ -1711,7 +1702,6 @@ function renderTournois(){
           <div class="tour-actions">
             <button class="btn-tour green" data-view-bracket="${t.id}">${ICON_MEDAL} Voir les résultats</button>
           </div>
-          ${renderParticipantsRow(t)}
         </div>
       </div>`;
     }
@@ -1742,7 +1732,6 @@ function renderTournois(){
             <button class="btn-tour" data-view-bracket="${t.id}">${ICON_MEDAL} Voir le classement</button>
             <button class="btn-tour secondary" data-view-reglement="${t.id}">Règlement</button>
           </div>
-          ${renderParticipantsRow(t)}
         </div>
       </div>`;
   }).join('');
