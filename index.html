@@ -1231,7 +1231,7 @@ nav{
   <div class="main-content">
     <div class="section-header">
       <span class="section-title">TOURNOIS</span>
-      <span class="section-count">3 ÉVÉNEMENTS</span>
+      <span class="section-count" id="tournois-count">0 ÉVÉNEMENT</span>
     </div>
 
     <div class="tournois-grid" id="tournois-list"></div>
@@ -2010,6 +2010,11 @@ function renderTournois(){
         </div>
       </div>`;
   }).join('');
+  const countEl = document.getElementById('tournois-count');
+  if(countEl){
+    const n = data.tournois.length;
+    countEl.textContent = `${n} ÉVÉNEMENT${n > 1 ? 'S' : ''}`;
+  }
 }
 
 function renderGiveaways(){
