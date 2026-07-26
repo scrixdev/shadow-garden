@@ -368,6 +368,59 @@ nav{
 .confirm-modal-actions .cm-warn{color:var(--black);border-color:var(--black);background:var(--yellow);box-shadow:3px 3px 0 var(--yellow-dark)}
 .confirm-modal-actions .cm-warn:hover{background:var(--yellow);filter:brightness(1.05);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--yellow-dark)}
 
+/* ===== TOAST NOTIFICATIONS (remplace alert()) ===== */
+.toast-container{
+  position:fixed;top:1.2rem;right:1.2rem;z-index:99999;
+  display:flex;flex-direction:column;gap:.7rem;
+  pointer-events:none;max-width:calc(100vw - 2.4rem);
+}
+.toast{
+  pointer-events:auto;min-width:280px;max-width:380px;
+  background:var(--card);border:2px solid #333;border-left:5px solid var(--yellow);
+  border-radius:2px;box-shadow:5px 5px 0 rgba(0,0,0,.6);
+  padding:.9rem 1rem;display:flex;align-items:flex-start;gap:.7rem;
+  animation:toastIn .35s cubic-bezier(.175,.885,.32,1.275);
+  position:relative;overflow:hidden;
+}
+.toast.hide{animation:toastOut .22s ease forwards}
+.toast.success{border-left-color:var(--green)}
+.toast.error{border-left-color:var(--red)}
+.toast.warning{border-left-color:var(--yellow)}
+.toast.info{border-left-color:var(--blue)}
+.toast-icon{
+  width:22px;height:22px;flex-shrink:0;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;font-size:.72rem;font-weight:900;
+}
+.toast.success .toast-icon{background:rgba(0,230,118,.15);color:var(--green)}
+.toast.error .toast-icon{background:rgba(255,61,61,.15);color:var(--red)}
+.toast.warning .toast-icon{background:rgba(255,214,0,.15);color:var(--yellow)}
+.toast.info .toast-icon{background:rgba(0,176,255,.15);color:var(--blue)}
+.toast-body{flex:1;min-width:0}
+.toast-title{font-size:.68rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem}
+.toast.success .toast-title{color:var(--green)}
+.toast.error .toast-title{color:var(--red)}
+.toast.warning .toast-title{color:var(--yellow)}
+.toast.info .toast-title{color:var(--blue)}
+.toast-text{font-size:.8rem;font-weight:700;color:var(--white);line-height:1.4;word-break:break-word}
+.toast-close{
+  background:none;border:none;color:var(--muted);font-size:.85rem;
+  cursor:pointer;line-height:1;padding:2px;flex-shrink:0;transition:color .12s
+}
+.toast-close:hover{color:var(--white)}
+.toast-bar{position:absolute;left:0;bottom:0;height:2.5px;background:currentColor;opacity:.5;animation:toastBar linear forwards}
+.toast.success .toast-bar{color:var(--green)}
+.toast.error .toast-bar{color:var(--red)}
+.toast.warning .toast-bar{color:var(--yellow)}
+.toast.info .toast-bar{color:var(--blue)}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px) scale(.96)}to{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(40px)}}
+@keyframes toastBar{from{width:100%}to{width:0%}}
+@media (max-width:600px){
+  .toast-container{left:1rem;right:1rem;top:1rem}
+  .toast{min-width:0;max-width:none;width:100%}
+}
+
 /* ===== PARTICIPANTS ===== */
 .participants-editor{background:var(--card2);border:2px solid #333;border-radius:2px;padding:1rem;margin-top:.6rem}
 .participants-editor-title{font-size:.72rem;font-weight:900;color:var(--yellow);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.7rem}
@@ -1282,6 +1335,8 @@ nav{
 </div>
 
 <!-- ============ CONFIRM MODAL (sans animation) ============ -->
+<div class="toast-container" id="toast-container"></div>
+
 <div class="modal-overlay" id="confirm-modal" onclick="onConfirmOverlayClick(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.2rem">
@@ -1686,7 +1741,7 @@ async function fsSaveDoc(kind, id, obj, {merge=true}={}){
     await db.collection(fsCollectionFor(kind)).doc(id).set(obj, { merge });
   }catch(e){
     console.error('Firestore save error ('+kind+'):', e);
-    alert("Sauvegarde en ligne impossible (droits insuffisants ?). Vérifie les règles Firestore — en attendant, c'est enregistré seulement sur cet appareil.");
+    showToast("Sauvegarde en ligne impossible (droits insuffisants ?). Vérifie les règles Firestore — en attendant, c'est enregistré seulement sur cet appareil.", 'warning');
   }
 }
 async function fsDeleteDoc(kind, id){
@@ -1695,7 +1750,7 @@ async function fsDeleteDoc(kind, id){
     await db.collection(fsCollectionFor(kind)).doc(id).delete();
   }catch(e){
     console.error('Firestore delete error ('+kind+'):', e);
-    alert("Suppression en ligne impossible (droits insuffisants ?). Vérifie les règles Firestore.");
+    showToast("Suppression en ligne impossible (droits insuffisants ?). Vérifie les règles Firestore.", 'error');
   }
 }
 
@@ -2854,7 +2909,7 @@ function renderAdminLists(){
         .catch(err => {
           console.error('Erreur mise à jour rôle :', err);
           btn.textContent = 'Erreur'; btn.disabled = false;
-          alert("Impossible d'enregistrer le rôle. Vérifie les règles Firestore (elles doivent autoriser la mise à jour du champ \"role\" dans la collection equipage).");
+          showToast("Impossible d'enregistrer le rôle. Vérifie les règles Firestore (elles doivent autoriser la mise à jour du champ \"role\" dans la collection equipage).", 'error');
         });
     }));
   }
@@ -2890,7 +2945,7 @@ function renderAdminsList(){
       await db.collection('admins').doc(email).delete();
     }catch(e){
       console.error('Erreur suppression admin :', e);
-      alert("Impossible de retirer cet admin.");
+      showToast("Impossible de retirer cet admin.", 'error');
     }
   }));
 }
@@ -2899,11 +2954,11 @@ document.getElementById('btn-save-admin').addEventListener('click', async ()=>{
   const input = document.getElementById('admin-new-email');
   const email = input.value.trim().toLowerCase();
   if(!email || !email.includes('@')){
-    alert('Renseigne un email valide.');
+    showToast('Renseigne un email valide.', 'error');
     return;
   }
   if(email === ADMIN_CREATOR_EMAIL){
-    alert('Cette personne est déjà admin (créateur du site).');
+    showToast('Cette personne est déjà admin (créateur du site).', 'warning');
     return;
   }
   const btn = document.getElementById('btn-save-admin');
@@ -2916,7 +2971,7 @@ document.getElementById('btn-save-admin').addEventListener('click', async ()=>{
     input.value = '';
   }catch(e){
     console.error('Erreur ajout admin :', e);
-    alert("Impossible d'ajouter cet admin. Vérifie que la personne a bien déjà un compte sur le site.");
+    showToast("Impossible d'ajouter cet admin. Vérifie que la personne a bien déjà un compte sur le site.", 'error');
   }finally{
     btn.disabled = false;
   }
@@ -2932,6 +2987,29 @@ function wireAdminListEvents(){
   document.querySelectorAll('[data-del-give]').forEach(b=>b.addEventListener('click', ()=>deleteItem('giveaways', b.dataset.delGive)));
   document.querySelectorAll('[data-edit-member]').forEach(b=>b.addEventListener('click', ()=>editMember(b.dataset.editMember)));
   document.querySelectorAll('[data-del-member]').forEach(b=>b.addEventListener('click', ()=>deleteItem('equipage', b.dataset.delMember)));
+}
+
+const TOAST_TITLES = { success:'Succès', error:'Erreur', warning:'Attention', info:'Info' };
+function showToast(message, type='info', duration=4200){
+  const container = document.getElementById('toast-container');
+  if(!container) return;
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  const icons = { success:'✓', error:'✕', warning:'!', info:'i' };
+  toast.innerHTML = `
+    <div class="toast-icon">${icons[type] || icons.info}</div>
+    <div class="toast-body">
+      <div class="toast-title">${TOAST_TITLES[type] || TOAST_TITLES.info}</div>
+      <div class="toast-text"></div>
+    </div>
+    <button class="toast-close" aria-label="Fermer">✕</button>
+    <div class="toast-bar" style="animation-duration:${duration}ms"></div>`;
+  toast.querySelector('.toast-text').textContent = message;
+  const remove = () => { toast.classList.add('hide'); setTimeout(() => toast.remove(), 220); };
+  toast.querySelector('.toast-close').addEventListener('click', remove);
+  if(duration > 0) setTimeout(remove, duration);
+  container.appendChild(toast);
+  return toast;
 }
 
 let _confirmResolve = null;
@@ -3021,7 +3099,7 @@ document.getElementById('btn-save-news').addEventListener('click', async ()=>{
   const date = document.getElementById('news-date').value.trim();
   const cat = document.getElementById('news-cat').value.trim();
   const image = document.getElementById('news-image-data').value || '';
-  if(!title){ alert('Le titre est obligatoire.'); return; }
+  if(!title){ showToast('Le titre est obligatoire.', 'error'); return; }
   const obj = { title, date, cat, image };
   const editId = document.getElementById('news-edit-id').value;
   let targetId = editId;
@@ -3094,7 +3172,7 @@ document.getElementById('btn-reset-tour-image').addEventListener('click', ()=>{
 document.getElementById('btn-cancel-tour').addEventListener('click', resetTourForm);
 document.getElementById('btn-save-tour').addEventListener('click', async ()=>{
   const title = document.getElementById('tour-title').value.trim();
-  if(!title){ alert('Le titre est obligatoire.'); return; }
+  if(!title){ showToast('Le titre est obligatoire.', 'error'); return; }
   const obj = {
     day: document.getElementById('tour-day').value.trim(),
     month: document.getElementById('tour-month').value.trim(),
@@ -3246,7 +3324,7 @@ function renderBracketEditorContent(t){
     saveData(); renderAll();
     await fsSaveDoc('tournois', t.id, { bracket: t.bracket });
     be.style.display = 'none'; be.innerHTML = '';
-    alert('Bracket enregistré.');
+    showToast('Bracket enregistré.', 'success');
   });
   const btnClose = document.getElementById('btn-close-bracket');
   if(btnClose) btnClose.addEventListener('click', ()=>{
@@ -3303,7 +3381,7 @@ document.getElementById('btn-reset-give-image').addEventListener('click', ()=>{
 document.getElementById('btn-cancel-give').addEventListener('click', resetGiveForm);
 document.getElementById('btn-save-give').addEventListener('click', async ()=>{
   const title = document.getElementById('give-title').value.trim();
-  if(!title){ alert('Le titre est obligatoire.'); return; }
+  if(!title){ showToast('Le titre est obligatoire.', 'error'); return; }
   const obj = {
     day: document.getElementById('give-day').value.trim(),
     month: document.getElementById('give-month').value.trim(),
@@ -3384,7 +3462,7 @@ function editMember(id){
 document.getElementById('btn-cancel-member').addEventListener('click', resetMemberForm);
 document.getElementById('btn-save-member').addEventListener('click', async ()=>{
   const name = document.getElementById('member-name').value.trim();
-  if(!name){ alert('Le pseudo est obligatoire.'); return; }
+  if(!name){ showToast('Le pseudo est obligatoire.', 'error'); return; }
   const obj = {
     name,
     role: document.getElementById('member-role').value.trim(),
