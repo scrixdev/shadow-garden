@@ -1919,8 +1919,8 @@ try{
       id: doc.id,
       name: m.displayName || m.username || m.robloxPseudo || 'Membre',
       icon: m.avatar || '',
-      role: m.role || 'Équipage',
-      origin: m.origin || 'Shadow Garden',
+      role: m.role || 'Membre',
+      origin: m.origin || 'Équipage',
       bounty: m.bounty || ''
     };
   }
@@ -2191,15 +2191,17 @@ function renderAdminLists(){
           <div class="admin-list-item-sub">Bounty : ${escapeHtml(m.bounty)} · Origine : ${escapeHtml(m.origin)}</div>
         </div>
         <div class="admin-list-item-actions">
-          <input type="text" class="role-edit-input" data-role-id="${escapeHtml(m.id)}" value="${escapeHtml(m.role)}">
+          <select class="role-edit-input" data-role-id="${escapeHtml(m.id)}">
+            ${['Owner','Co-Owner','Admin','Membre'].map(r => `<option value="${r}" ${m.role===r?'selected':''}>${r}</option>`).join('')}
+          </select>
           <button class="edit" data-save-role="${escapeHtml(m.id)}">Enregistrer</button>
         </div>
       </div>`).join('') : '<div class="admin-empty">Personne n\'a encore rejoint via /equipage sur Discord.</div>';
 
     discordList.querySelectorAll('[data-save-role]').forEach(btn => btn.addEventListener('click', () => {
       const id = btn.dataset.saveRole;
-      const input = discordList.querySelector(`.role-edit-input[data-role-id="${id}"]`);
-      const newRole = input.value.trim();
+      const select = discordList.querySelector(`.role-edit-input[data-role-id="${id}"]`);
+      const newRole = select.value;
       if(!newRole || !db) return;
       btn.disabled = true; const original = btn.textContent; btn.textContent = '...';
       db.collection('equipage').doc(id).update({ role: newRole })
