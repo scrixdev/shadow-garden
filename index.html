@@ -2068,10 +2068,9 @@ function renderGiveawayParticipants(g){
           <div class="witcher-card-corner bottom-right"></div>
           <div class="witcher-card-content">
             <div class="witcher-card-title">LOT</div>
-            <div class="witcher-card-icon">${ICON_PRIZE}</div>
+            <div class="witcher-card-icon">${g.image ? `<img src="${escapeHtml(g.image)}" alt="">` : ICON_PRIZE}</div>
             <div class="witcher-card-details">
               <div class="witcher-card-stat"><span>À gagner</span><span>${escapeHtml(g.prize || g.title)}</span></div>
-              <div class="witcher-card-stat"><span>Participants</span><span>${list.length}</span></div>
             </div>
           </div>
         </div>
