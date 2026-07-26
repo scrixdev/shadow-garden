@@ -1677,6 +1677,10 @@ const ICON_CHECK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" 
 const ICON_MEDAL = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12M15 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/></svg>';
 
 
+function placesLabel(t){
+  const count = Array.isArray(t.participants) ? t.participants.length : 0;
+  return count >= 8 ? 'Max' : `${count}/8`;
+}
 function renderTournois(){
   const list = document.getElementById('tournois-list');
   if(!list) return;
@@ -1724,7 +1728,7 @@ function renderTournois(){
             <div class="tour-format-row">${ICON_LEVEL} Format : <b>${escapeHtml(t.format)}</b></div>
             <div class="tournament-meta-grid">
               <div class="tour-meta-item">${ICON_LEVEL}<span class="val-wrap">Niveau<b>${escapeHtml(t.level)}</b></span></div>
-              <div class="tour-meta-item">${ICON_USERS}<span class="val-wrap">Places<b>${escapeHtml(t.places)}</b></span></div>
+              <div class="tour-meta-item">${ICON_USERS}<span class="val-wrap">Places<b>${placesLabel(t)}</b></span></div>
               <div class="tour-meta-item">${ICON_GIFT}<span class="val-wrap">Récompense<b>${escapeHtml(t.reward)}</b></span></div>
             </div>
           </div>
