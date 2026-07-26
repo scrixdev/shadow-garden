@@ -2182,23 +2182,37 @@ try{
   }
 
   // Tournois gérés depuis le panel admin -> collection "tournois" (écoute en temps réel)
+  // Les participants (sous-collection "participants" écrite par le bot Discord quand
+  // quelqu'un clique "Rejoindre") sont eux aussi écoutés en temps réel : sans ça, un
+  // join/leave depuis Discord n'écrivait que dans la sous-collection et ne déclenchait
+  // jamais le listener du doc parent -> il fallait refresh la page pour voir le changement.
+  let tournoiParticipantUnsubs = [];
   db.collection('tournois').orderBy('createdAt', 'desc')
-    .onSnapshot(async snap => {
-      const tournois = snap.docs.map(firestoreDocToTournoi);
-      await Promise.all(snap.docs.map(async (doc, i) => {
-        try{
-          const pSnap = await doc.ref.collection('participants').orderBy('joinedAt', 'asc').get();
-          tournois[i].participants = pSnap.docs.map(p => p.data());
-        }catch(e){
-          tournois[i].participants = [];
-        }
-      }));
-      data.tournois = tournois;
+    .onSnapshot(snap => {
+      tournoiParticipantUnsubs.forEach(unsub => unsub());
+      tournoiParticipantUnsubs = [];
+
+      data.tournois = snap.docs.map(firestoreDocToTournoi);
       data.tournois.forEach(t => ensureBracket(t));
       renderBrackets();
       renderTournois();
       renderAdminLists();
       renderAdminDashboard();
+
+      snap.docs.forEach(doc => {
+        const unsub = doc.ref.collection('participants').orderBy('joinedAt', 'asc')
+          .onSnapshot(pSnap => {
+            const t = data.tournois.find(x => x.id === doc.id);
+            if(!t) return;
+            t.participants = pSnap.docs.map(p => p.data());
+            ensureBracket(t);
+            renderBrackets();
+            renderTournois();
+            renderAdminLists();
+            renderAdminDashboard();
+          }, err => console.error('Firestore (participants tournoi) :', err));
+        tournoiParticipantUnsubs.push(unsub);
+      });
     }, err => console.error('Firestore (tournois) :', err));
 
   // Actus gérées depuis le panel admin -> collection "news" (écoute en temps réel)
@@ -2247,28 +2261,34 @@ try{
     };
   }
 
-  db.collection('giveaways').orderBy('createdAt', 'desc').get()
-    .then(async snap => {
-      if(!snap.empty){
-        const giveaways = snap.docs.map(firestoreDocToGiveaway);
-        await Promise.all(snap.docs.map(async (doc, i) => {
-          try{
-            const pSnap = await doc.ref.collection('participants').orderBy('joinedAt', 'asc').get();
-            giveaways[i].participants = pSnap.size;
-            giveaways[i].participantsList = pSnap.docs.map(p => {
+  // Écoute en temps réel (avant c'était un .get() ponctuel : un giveaway créé sur Discord
+  // n'apparaissait qu'après un refresh). Les participants (sous-collection écrite quand
+  // quelqu'un clique "Participer" sur Discord) sont eux aussi écoutés en temps réel,
+  // pour la même raison que pour les tournois ci-dessus.
+  let giveawayParticipantUnsubs = [];
+  db.collection('giveaways').orderBy('createdAt', 'desc')
+    .onSnapshot(snap => {
+      giveawayParticipantUnsubs.forEach(unsub => unsub());
+      giveawayParticipantUnsubs = [];
+
+      discordGiveaways = snap.docs.map(firestoreDocToGiveaway);
+      renderGiveaways();
+
+      snap.docs.forEach(doc => {
+        const unsub = doc.ref.collection('participants').orderBy('joinedAt', 'asc')
+          .onSnapshot(pSnap => {
+            const g = discordGiveaways.find(x => x.id === doc.id);
+            if(!g) return;
+            g.participants = pSnap.size;
+            g.participantsList = pSnap.docs.map(p => {
               const d = p.data();
               return { name: d.displayName || d.username || 'Participant', avatar: d.avatar || '' };
             });
-          }catch(e){
-            giveaways[i].participants = 0;
-            giveaways[i].participantsList = [];
-          }
-        }));
-        discordGiveaways = giveaways;
-        renderGiveaways();
-      }
-    })
-    .catch(err => console.error('Firestore (giveaways) :', err));
+            renderGiveaways();
+          }, err => console.error('Firestore (participants giveaway) :', err));
+        giveawayParticipantUnsubs.push(unsub);
+      });
+    }, err => console.error('Firestore (giveaways) :', err));
 
   // Giveaways créés à la main dans le panel admin -> collection "giveaways_manual" (écoute en temps réel)
   db.collection('giveaways_manual').orderBy('createdAt', 'desc')
