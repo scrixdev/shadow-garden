@@ -396,6 +396,168 @@ nav{
 /* ===== LAYOUT ===== */
 .screen{display:none;min-height:calc(100vh - 64px)}
 .screen.active{display:block}
+#screen-login.screen.active{display:flex}
+
+/* ===================== */
+/* ===== LOGIN ========= */
+/* ===================== */
+#screen-login{
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  background:#111;
+  position:relative;
+  overflow:hidden;
+  min-height:100vh;
+}
+#screen-login::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;bottom:0;
+  background: repeating-linear-gradient(
+    -55deg,
+    #1a1a1a 0px, #1a1a1a 20px,
+    #141414 20px, #141414 40px
+  );
+  z-index:0;
+}
+#screen-login::after{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;height:8px;
+  background: var(--yellow);
+  z-index:2;
+}
+.login-container{
+  position:relative;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:0;
+  width:100%;
+  max-width:440px;
+  padding:2rem 1.5rem;
+}
+.login-logo-wrap{text-align:center;margin-bottom:2rem}
+.login-hex-icon{
+  width:80px;height:80px;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 1rem;
+  position:relative;
+}
+.login-brand-title{
+  font-family:var(--font-display);
+  font-size:2.6rem;
+  letter-spacing:4px;
+  color:var(--yellow);
+  text-shadow:4px 4px 0px var(--yellow-dark);
+  line-height:1;
+}
+.login-brand-title span{color:var(--white)}
+.login-brand-sub{
+  font-size:.8rem;
+  font-weight:700;
+  color:var(--muted);
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  margin-top:.3rem;
+}
+.login-box{
+  background:var(--black);
+  border:3px solid var(--yellow);
+  box-shadow:6px 6px 0px var(--yellow-dark);
+  border-radius:4px;
+  padding:2rem;
+  width:100%;
+}
+.login-toggle{display:flex;border:2px solid var(--yellow);border-radius:2px;overflow:hidden;margin-bottom:1.5rem}
+.login-toggle-btn{
+  flex:1;padding:.7rem;background:var(--black);color:var(--muted);
+  border:none;font-weight:900;font-size:.8rem;letter-spacing:.08em;
+  text-transform:uppercase;transition:.15s;
+}
+.login-toggle-btn.active{background:var(--yellow);color:var(--black)}
+.login-title{
+  font-family:var(--font-display);
+  font-size:1.8rem;
+  letter-spacing:2px;
+  color:var(--white);
+  margin-bottom:.25rem;
+}
+.login-subtitle{
+  font-size:.8rem;
+  font-weight:700;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  margin-bottom:1.5rem;
+}
+.login-error{
+  background:rgba(255,61,61,0.1);
+  border:2px solid var(--red);
+  padding:.65rem 1rem;
+  font-size:.82rem;
+  font-weight:700;
+  color:var(--red);
+  margin-bottom:1rem;
+  display:none;
+}
+.login-error.show{display:block}
+.form-group{margin-bottom:1rem}
+.form-group label{
+  display:block;
+  font-size:.7rem;
+  font-weight:800;
+  color:var(--yellow);
+  margin-bottom:.4rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.input-wrap{position:relative}
+.input-wrap svg{
+  position:absolute;left:12px;top:50%;
+  transform:translateY(-50%);
+  color:var(--muted);pointer-events:none;
+}
+.input-wrap input{
+  width:100%;
+  background:#1a1a1a;
+  border:2px solid #444;
+  padding:12px 12px 12px 40px;
+  color:var(--white);
+  font-size:.9rem;
+  font-weight:600;
+  outline:none;
+  transition:all .2s;
+  border-radius:2px;
+  font-family:var(--font);
+}
+.input-wrap input::placeholder{color:var(--muted)}
+.input-wrap input:focus{
+  border-color:var(--yellow);
+  background:#222;
+  box-shadow:0 0 0 3px rgba(255,214,0,0.15), 3px 3px 0px var(--yellow-dark);
+}
+.login-box .btn-primary{
+  width:100%;
+  padding:14px;
+  background:var(--yellow);
+  color:var(--black);
+  border:3px solid var(--black);
+  box-shadow:4px 4px 0px var(--black);
+  font-size:1rem;
+  font-weight:900;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  transition:all .12s;
+  border-radius:2px;
+  margin-top:.5rem;
+}
+.login-box .btn-primary:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0px var(--black)}
+.login-box .btn-primary:active{transform:translate(2px,2px);box-shadow:2px 2px 0px var(--black)}
+.login-box .btn-primary:disabled{opacity:.6;cursor:default;transform:none}
+.screen.active{display:block}
 .main-content{max-width:1280px;margin:0 auto;width:100%;padding:2rem 1.5rem 4rem}
 
 .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:.6rem}
@@ -929,6 +1091,77 @@ nav{
     </style>
 </head>
 <body>
+<!-- ============ LOGIN / INSCRIPTION ============ -->
+<div id="screen-login" class="screen active">
+  <div class="login-container">
+    <div class="login-logo-wrap">
+      <div class="login-hex-icon">
+        <img src="data:image/png;base64,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" style="width:80px;height:80px;object-fit:contain" alt="Shadow Garden">
+      </div>
+      <div class="login-brand-title">SHADOW<br><span>GARDEN</span></div>
+      <div class="login-brand-sub">Communauté gaming francophone</div>
+    </div>
+
+    <div class="login-box">
+      <div class="login-toggle">
+        <button class="login-toggle-btn active" id="toggle-login" onclick="switchLoginMode('login')">Connexion</button>
+        <button class="login-toggle-btn" id="toggle-register" onclick="switchLoginMode('register')">Inscription</button>
+      </div>
+
+      <!-- CONNEXION -->
+      <div id="login-form-wrap">
+        <div class="login-title">CONNEXION</div>
+        <div class="login-subtitle">Entrez vos identifiants</div>
+        <div class="login-error" id="login-error"></div>
+        <div class="form-group">
+          <label>Adresse e-mail</label>
+          <div class="input-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input type="email" id="login-email" placeholder="vous@exemple.fr" autocomplete="email" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <div class="input-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+        </div>
+        <button class="btn-primary" id="login-submit-btn" onclick="doMemberLogin()">▶ SE CONNECTER</button>
+      </div>
+
+      <!-- INSCRIPTION -->
+      <div id="register-form-wrap" style="display:none">
+        <div class="login-title">INSCRIPTION</div>
+        <div class="login-subtitle">Créez votre compte</div>
+        <div class="login-error" id="register-error"></div>
+        <div class="form-group">
+          <label>Pseudo</label>
+          <div class="input-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="reg-name" placeholder="MonPseudo" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Adresse e-mail</label>
+          <div class="input-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input type="email" id="reg-email" placeholder="vous@exemple.fr" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <div class="input-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="reg-pass" placeholder="•••••••• (min. 6 caractères)" />
+          </div>
+        </div>
+        <button class="btn-primary" id="register-submit-btn" onclick="doMemberRegister()">▶ CRÉER MON COMPTE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <nav id="main-nav">
   <div class="logo">
     <div class="logo-icon">
@@ -945,6 +1178,10 @@ nav{
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       ADMIN
     </button>
+    <button class="btn-admin-nav" id="btn-member-logout" onclick="doMemberLogout()" title="Se déconnecter">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span id="member-pseudo"></span>
+    </button>
     <a class="btn-join" href="https://discord.com/invite/U9FuSADmNn" target="_blank" rel="noopener noreferrer">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       REJOINDRE
@@ -953,7 +1190,7 @@ nav{
 </nav>
 
 <!-- ============ ACCUEIL ============ -->
-<div id="screen-accueil" class="screen active">
+<div id="screen-accueil" class="screen">
   <div class="main-content">
     <div class="hero">
       <div class="hero-inner">
@@ -1334,7 +1571,7 @@ function goPage(page){
   const btn = document.querySelector('.npb[data-page="'+page+'"]');
   if(btn) btn.classList.add('active');
   const mainNav = document.getElementById('main-nav');
-  if(mainNav) mainNav.style.display = (page === 'admin') ? 'none' : '';
+  if(mainNav) mainNav.style.display = (page === 'admin' || page === 'login') ? 'none' : '';
   window.scrollTo({top:0,behavior:'smooth'});
 }
 document.querySelectorAll('.npb[data-page]').forEach(b=>{
@@ -2207,19 +2444,114 @@ document.getElementById('admin-modal-cancel').addEventListener('click', closeAdm
 adminModalBackdrop.addEventListener('click', (e)=>{ if(e.target === adminModalBackdrop) closeAdminModal(); });
 document.getElementById('btn-admin-logout').addEventListener('click', ()=>{
   firebase.auth().signOut();
-  goPage('accueil');
 });
 
+/* ---------- MEMBRES: connexion / inscription (Firebase Auth + Firestore "users") ---------- */
+const STATE = { currentUser: null };
+
+function buildMemberFromProfile(user, profile){
+  const fallbackName = user && user.email ? user.email.split('@')[0] : 'Membre';
+  return {
+    id: user.uid,
+    email: user.email,
+    name: (profile && profile.pseudo) || fallbackName,
+    role: (profile && profile.role) || 'membre'
+  };
+}
+
+function switchLoginMode(mode){
+  document.getElementById('login-form-wrap').style.display = mode==='login' ? '' : 'none';
+  document.getElementById('register-form-wrap').style.display = mode==='register' ? '' : 'none';
+  document.getElementById('toggle-login').classList.toggle('active', mode==='login');
+  document.getElementById('toggle-register').classList.toggle('active', mode==='register');
+  document.getElementById('login-error').classList.remove('show');
+  document.getElementById('register-error').classList.remove('show');
+}
+
+async function doMemberLogin(){
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.classList.remove('show');
+  if(!email || !pass){ errEl.textContent='Remplis tous les champs.'; errEl.classList.add('show'); return; }
+  const btn = document.getElementById('login-submit-btn');
+  btn.disabled = true; btn.textContent = 'Connexion...';
+  try{
+    await firebase.auth().signInWithEmailAndPassword(email, pass);
+    // onAuthStateChanged prend le relais (charge le profil + goPage('accueil'))
+  }catch(err){
+    console.error('Erreur de connexion :', err);
+    errEl.textContent = 'Email ou mot de passe incorrect.';
+    errEl.classList.add('show');
+  }finally{
+    btn.disabled = false; btn.textContent = '▶ SE CONNECTER';
+  }
+}
+
+async function doMemberRegister(){
+  const pseudo = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim().toLowerCase();
+  const pass = document.getElementById('reg-pass').value;
+  const errEl = document.getElementById('register-error');
+  errEl.classList.remove('show');
+  if(!pseudo || !email || !pass){ errEl.textContent='Remplis tous les champs.'; errEl.classList.add('show'); return; }
+  if(pass.length < 6){ errEl.textContent='Mot de passe trop court (min. 6 caractères).'; errEl.classList.add('show'); return; }
+  const btn = document.getElementById('register-submit-btn');
+  btn.disabled = true; btn.textContent = 'Création...';
+  try{
+    const cred = await firebase.auth().createUserWithEmailAndPassword(email, pass);
+    await db.collection('users').doc(cred.user.uid).set({
+      pseudo: pseudo,
+      email: email,
+      role: 'membre',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // onAuthStateChanged prend le relais (charge le profil + goPage('accueil'))
+  }catch(err){
+    console.error('Erreur d\'inscription :', err);
+    errEl.textContent = err && err.code === 'auth/email-already-in-use'
+      ? 'Cet email est déjà utilisé.'
+      : (err && err.message) || 'Erreur lors de la création du compte.';
+    errEl.classList.add('show');
+  }finally{
+    btn.disabled = false; btn.textContent = '▶ CRÉER MON COMPTE';
+  }
+}
+
+function doMemberLogout(){
+  firebase.auth().signOut();
+}
+
 // Firebase garde la session ouverte automatiquement (même après un rechargement de page).
-// Si un compte connecté n'est pas celui du créateur, on le déconnecte aussitôt.
-firebase.auth().onAuthStateChanged(user => {
-  if(user && user.email !== ADMIN_CREATOR_EMAIL){
-    firebase.auth().signOut();
+firebase.auth().onAuthStateChanged(async user => {
+  if(!user){
     currentAdminUser = null;
+    STATE.currentUser = null;
+    if(btnAdminNav) btnAdminNav.classList.remove('logged');
+    goPage('login');
     return;
   }
-  currentAdminUser = user;
-  if(btnAdminNav) btnAdminNav.classList.toggle('logged', !!currentAdminUser);
+
+  if(user.email === ADMIN_CREATOR_EMAIL){
+    currentAdminUser = user;
+    if(btnAdminNav) btnAdminNav.classList.add('logged');
+  } else {
+    currentAdminUser = null;
+  }
+
+  try{
+    const doc = await db.collection('users').doc(user.uid).get();
+    STATE.currentUser = buildMemberFromProfile(user, doc.exists ? doc.data() : null);
+  }catch(e){
+    console.warn('Chargement profil échoué :', e);
+    STATE.currentUser = buildMemberFromProfile(user, null);
+  }
+  const pseudoEl = document.getElementById('member-pseudo');
+  if(pseudoEl) pseudoEl.textContent = STATE.currentUser.name;
+
+  if(document.getElementById('screen-login').classList.contains('active')){
+    goPage('accueil');
+  }
 });
 
 function enterAdminPanel(){
