@@ -1895,7 +1895,7 @@ function matchCardHtml(name, isWinner, isLoser, roundLabel, icon){
       <div class="witcher-card-corner bottom-right"></div>
       <div class="witcher-card-content">
         <div class="witcher-card-title">${name ? escapeHtml(name) : 'À définir'}</div>
-        <div class="witcher-card-icon">${icon ? `<img src="${icon}" alt="">` : ICON_WOLF}</div>
+        <div class="witcher-card-icon">${icon ? `<img src="${icon}" alt="" style="border-radius:50%;object-fit:cover">` : ICON_WOLF}</div>
         <div class="witcher-card-details">
           <div class="witcher-card-stat"><span>Manche</span><span>${escapeHtml(roundLabel)}</span></div>
           <div class="witcher-card-stat"><span>Statut</span><span>${statusText}</span></div>
