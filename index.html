@@ -149,9 +149,11 @@ nav{
 .reglement-modal-body::-webkit-scrollbar{display:none}
 
 /* ===== GIVEAWAY — modale participants (réutilise la modale plein écran) ===== */
-.give-participants-wrap{display:flex;gap:1.6rem;align-items:flex-start;justify-content:center;max-width:1150px;margin:0 auto;flex-wrap:wrap}
-.give-participants-col{flex:1;min-width:230px;max-width:340px;display:flex;flex-direction:column;gap:.6rem}
-.give-prize-card-wrap{flex-shrink:0;align-self:center}
+.give-participants-wrap{display:grid;grid-template-columns:1fr auto 1fr;align-items:flex-start;gap:1.6rem;width:100%;max-width:1500px;margin:0 auto}
+.give-participants-col{display:flex;flex-direction:column;gap:.6rem;width:100%;max-width:340px}
+.give-participants-col:first-of-type{justify-self:start}
+.give-participants-col:last-of-type{justify-self:end}
+.give-prize-card-wrap{flex-shrink:0;justify-self:center}
 .give-prize-card-wrap .witcher-card-container{width:300px;max-width:300px}
 .give-prize-card-wrap .witcher-card{width:300px;height:450px}
 .give-participant-row{display:flex;align-items:center;gap:.7rem;background:var(--card2);border:2px solid #333;border-radius:2px;padding:.55rem .8rem}
@@ -2073,6 +2075,7 @@ function renderGiveawayParticipants(g){
             <div class="witcher-card-icon">${g.image ? `<img src="${escapeHtml(g.image)}" alt="">` : ICON_PRIZE}</div>
             <div class="witcher-card-details">
               <div class="witcher-card-stat"><span>À gagner</span><span>${escapeHtml(g.prize || g.title)}</span></div>
+              <div class="witcher-card-stat"><span>Participants</span><span>${list.length}</span></div>
             </div>
           </div>
         </div>
