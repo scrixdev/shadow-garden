@@ -1599,6 +1599,7 @@ const STORAGE_KEY = "shadowArmySiteData";
 // Membres de l'équipage inscrits via le formulaire /equipage du bot Discord
 // (alimenté en temps réel depuis Firestore, voir bloc FIREBASE plus bas)
 let discordEquipage = [];
+let discordGiveaways = [];
 let db = null;
 
 const ICON_SQUARE = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>';
@@ -1649,6 +1650,35 @@ function saveData(){
 }
 
 let data = loadData();
+
+/* ---------- FIRESTORE: helpers d'écriture (admin uniquement) ----------
+   - tournois -> collection "tournois" (participants gérés à part, on n'y touche pas)
+   - news -> collection "news"
+   - giveaways créés à la main dans l'admin -> collection "giveaways_manual"
+     (distincte des giveaways créés par le bot Discord dans "giveaways")
+   - membres d'équipage ajoutés à la main -> collection "staff"
+     (distincte des membres inscrits via /equipage sur Discord dans "equipage")
+*/
+const FS_COLLECTION = { tournois:'tournois', news:'news', giveaways:'giveaways_manual', equipage:'staff' };
+function fsCollectionFor(kind){ return FS_COLLECTION[kind] || kind; }
+async function fsSaveDoc(kind, id, obj, {merge=true}={}){
+  if(!db) return;
+  try{
+    await db.collection(fsCollectionFor(kind)).doc(id).set(obj, { merge });
+  }catch(e){
+    console.error('Firestore save error ('+kind+'):', e);
+    alert("Sauvegarde en ligne impossible (droits insuffisants ?). Vérifie les règles Firestore — en attendant, c'est enregistré seulement sur cet appareil.");
+  }
+}
+async function fsDeleteDoc(kind, id){
+  if(!db) return;
+  try{
+    await db.collection(fsCollectionFor(kind)).doc(id).delete();
+  }catch(e){
+    console.error('Firestore delete error ('+kind+'):', e);
+    alert("Suppression en ligne impossible (droits insuffisants ?). Vérifie les règles Firestore.");
+  }
+}
 
 /* ---------- RENDER: public site ---------- */
 function renderStats(){
@@ -2020,7 +2050,8 @@ function renderTournois(){
 function renderGiveaways(){
   const list = document.getElementById('giveaway-list');
   if(!list) return;
-  list.innerHTML = data.giveaways.map(g => `
+  const all = [...data.giveaways, ...discordGiveaways];
+  list.innerHTML = all.map(g => `
     <div class="giveaway-card">
       <div class="giveaway-card-top">
         <div class="giveaway-card-date"><span class="giveaway-card-day">${escapeHtml(g.day)}</span><span class="giveaway-card-month">${escapeHtml(g.month)}</span></div>
@@ -2044,7 +2075,7 @@ function renderGiveaways(){
       </div>
     </div>`).join('');
   const count = document.getElementById('giveaway-count');
-  if(count) count.textContent = data.giveaways.length + ' EN COURS';
+  if(count) count.textContent = all.length + ' EN COURS';
 }
 
 function renderEquipage(){
@@ -2132,8 +2163,10 @@ try{
       places: t.places || "",
       reward: t.reward || "",
       status: t.status || "Ouvertes",
+      reglement: t.reglement || "",
       finished: !!t.finished,
-      image: t.image || ""
+      image: t.image || "",
+      bracket: t.bracket || null
     };
   }
 
@@ -2148,34 +2181,34 @@ try{
     };
   }
 
-  db.collection('tournois').orderBy('createdAt', 'desc').get()
-    .then(async snap => {
-      if(!snap.empty){
-        const tournois = snap.docs.map(firestoreDocToTournoi);
-        await Promise.all(snap.docs.map(async (doc, i) => {
-          try{
-            const pSnap = await doc.ref.collection('participants').orderBy('joinedAt', 'asc').get();
-            tournois[i].participants = pSnap.docs.map(p => p.data());
-          }catch(e){
-            tournois[i].participants = [];
-          }
-        }));
-        data.tournois = tournois;
-        data.tournois.forEach(t => ensureBracket(t));
-        renderBrackets();
-        renderTournois();
-      }
-    })
-    .catch(err => console.error('Firestore (tournois) :', err));
+  // Tournois gérés depuis le panel admin -> collection "tournois" (écoute en temps réel)
+  db.collection('tournois').orderBy('createdAt', 'desc')
+    .onSnapshot(async snap => {
+      const tournois = snap.docs.map(firestoreDocToTournoi);
+      await Promise.all(snap.docs.map(async (doc, i) => {
+        try{
+          const pSnap = await doc.ref.collection('participants').orderBy('joinedAt', 'asc').get();
+          tournois[i].participants = pSnap.docs.map(p => p.data());
+        }catch(e){
+          tournois[i].participants = [];
+        }
+      }));
+      data.tournois = tournois;
+      data.tournois.forEach(t => ensureBracket(t));
+      renderBrackets();
+      renderTournois();
+      renderAdminLists();
+      renderAdminDashboard();
+    }, err => console.error('Firestore (tournois) :', err));
 
-  db.collection('news').orderBy('createdAt', 'desc').get()
-    .then(snap => {
-      if(!snap.empty){
-        data.news = snap.docs.map(firestoreDocToNews);
-        renderNews();
-      }
-    })
-    .catch(err => console.error('Firestore (news) :', err));
+  // Actus gérées depuis le panel admin -> collection "news" (écoute en temps réel)
+  db.collection('news').orderBy('createdAt', 'desc')
+    .onSnapshot(snap => {
+      data.news = snap.docs.map(firestoreDocToNews);
+      renderNews();
+      renderAdminLists();
+      renderAdminDashboard();
+    }, err => console.error('Firestore (news) :', err));
 
   // Giveaways créés via /giveaway create sur Discord
   const FR_MONTHS = ['JANV.','FÉVR.','MARS','AVR.','MAI','JUIN','JUIL.','AOÛT','SEPT.','OCT.','NOV.','DÉC.'];
@@ -2231,11 +2264,29 @@ try{
             giveaways[i].participantsList = [];
           }
         }));
-        data.giveaways = giveaways;
+        discordGiveaways = giveaways;
         renderGiveaways();
       }
     })
     .catch(err => console.error('Firestore (giveaways) :', err));
+
+  // Giveaways créés à la main dans le panel admin -> collection "giveaways_manual" (écoute en temps réel)
+  db.collection('giveaways_manual').orderBy('createdAt', 'desc')
+    .onSnapshot(snap => {
+      data.giveaways = snap.docs.map(doc => {
+        const g = doc.data();
+        return {
+          id: doc.id,
+          day: g.day || "", month: g.month || "", title: g.title || "", desc: g.desc || "",
+          prize: g.prize || "", participants: g.participants || 0, progress: g.progress || 0,
+          draw: g.draw || "", image: g.image || "",
+          participantsList: g.participantsList || [], conditions: g.conditions || ""
+        };
+      });
+      renderGiveaways();
+      renderAdminLists();
+      renderAdminDashboard();
+    }, err => console.error('Firestore (giveaways_manual) :', err));
 
   // Membres de l'équipage inscrits via /equipage sur Discord — écoute en temps réel :
   // dès qu'une personne remplit le formulaire, sa carte apparaît sans recharger la page.
@@ -2257,6 +2308,18 @@ try{
       renderEquipage();
       renderAdminLists();
     }, err => console.error('Firestore (equipage) :', err));
+
+  // Membres d'équipage ajoutés à la main dans le panel admin -> collection "staff" (écoute en temps réel)
+  db.collection('staff').orderBy('createdAt', 'desc')
+    .onSnapshot(snap => {
+      data.equipage = snap.docs.map(doc => {
+        const m = doc.data();
+        return { id: doc.id, name: m.name || "", role: m.role || "", origin: m.origin || "Shadow Garden", status: m.status || "", icon: m.icon || "" };
+      });
+      renderEquipage();
+      renderAdminLists();
+      renderAdminDashboard();
+    }, err => console.error('Firestore (staff) :', err));
 }catch(e){
   console.error('Firebase init a échoué :', e);
 }
@@ -2341,7 +2404,7 @@ function renderGiveawayParticipants(g){
     </div>`;
 }
 function openGiveawayModal(giveId){
-  const g = data.giveaways.find(x => x.id === giveId);
+  const g = data.giveaways.find(x => x.id === giveId) || discordGiveaways.find(x => x.id === giveId);
   if(!g) return;
   window._pvpShowWinnerScreen = false;
   bracketModalTitle.textContent = 'GIVEAWAY';
@@ -2378,7 +2441,7 @@ document.addEventListener('click', (e)=>{
   }
   const btnC = e.target.closest('[data-view-conditions]');
   if(btnC){
-    const g = data.giveaways.find(x=>x.id===btnC.dataset.viewConditions);
+    const g = data.giveaways.find(x=>x.id===btnC.dataset.viewConditions) || discordGiveaways.find(x=>x.id===btnC.dataset.viewConditions);
     if(g) openInfoModal('Conditions', g.conditions);
   }
 });
@@ -2770,6 +2833,7 @@ async function deleteItem(kind, id){
   if(!ok) return;
   data[kind] = data[kind].filter(it => it.id !== id);
   saveData(); renderAll(); renderAdminLists(); renderAdminDashboard();
+  await fsDeleteDoc(kind, id);
 }
 
 /* ---------- ADMIN: news CRUD ---------- */
@@ -2814,20 +2878,25 @@ document.getElementById('btn-reset-news-image').addEventListener('click', ()=>{
   document.getElementById('news-image-file').value = '';
 });
 document.getElementById('btn-cancel-news').addEventListener('click', resetNewsForm);
-document.getElementById('btn-save-news').addEventListener('click', ()=>{
+document.getElementById('btn-save-news').addEventListener('click', async ()=>{
   const title = document.getElementById('news-title').value.trim();
   const date = document.getElementById('news-date').value.trim();
   const cat = document.getElementById('news-cat').value.trim();
   const image = document.getElementById('news-image-data').value || '';
   if(!title){ alert('Le titre est obligatoire.'); return; }
+  const obj = { title, date, cat, image };
   const editId = document.getElementById('news-edit-id').value;
+  let targetId = editId;
   if(editId){
     const n = data.news.find(x=>x.id===editId);
     if(n){ n.title=title; n.date=date; n.cat=cat; n.image=image; }
   } else {
-    data.news.unshift({ id:uid('n'), title, date, cat, image });
+    targetId = uid('n');
+    data.news.unshift({ id:targetId, title, date, cat, image });
   }
   saveData(); renderAll(); renderAdminLists(); renderAdminDashboard(); resetNewsForm();
+  if(!editId) obj.createdAt = Date.now();
+  await fsSaveDoc('news', targetId, obj);
 });
 
 /* ---------- ADMIN: tournois CRUD ---------- */
@@ -2885,7 +2954,7 @@ document.getElementById('btn-reset-tour-image').addEventListener('click', ()=>{
   document.getElementById('tour-image-file').value = '';
 });
 document.getElementById('btn-cancel-tour').addEventListener('click', resetTourForm);
-document.getElementById('btn-save-tour').addEventListener('click', ()=>{
+document.getElementById('btn-save-tour').addEventListener('click', async ()=>{
   const title = document.getElementById('tour-title').value.trim();
   if(!title){ alert('Le titre est obligatoire.'); return; }
   const obj = {
@@ -2904,20 +2973,26 @@ document.getElementById('btn-save-tour').addEventListener('click', ()=>{
   };
   const bracketEnabled = document.getElementById('tour-bracket-enabled').checked;
   const editId = document.getElementById('tour-edit-id').value;
+  let targetId = editId;
   if(editId){
     const t = data.tournois.find(x=>x.id===editId);
     if(t){
       Object.assign(t, obj);
       ensureBracket(t);
       t.bracket.enabled = bracketEnabled;
+      obj.bracket = t.bracket;
     }
   } else {
     const nt = Object.assign({ id:uid('t') }, obj);
     ensureBracket(nt);
     nt.bracket.enabled = bracketEnabled;
+    obj.bracket = nt.bracket;
     data.tournois.unshift(nt);
+    targetId = nt.id;
   }
   saveData(); renderAll(); renderAdminLists(); renderAdminDashboard(); resetTourForm();
+  if(!editId) obj.createdAt = Date.now();
+  await fsSaveDoc('tournois', targetId, obj);
 });
 
 /* ---------- ADMIN: bracket editor (équipes + résultats) ---------- */
@@ -3029,8 +3104,9 @@ function renderBracketEditorContent(t){
     saveData(); renderBracketEditorContent(t); renderBrackets();
   });
   const btnSave = document.getElementById('btn-save-bracket');
-  if(btnSave) btnSave.addEventListener('click', ()=>{
+  if(btnSave) btnSave.addEventListener('click', async ()=>{
     saveData(); renderAll();
+    await fsSaveDoc('tournois', t.id, { bracket: t.bracket });
     be.style.display = 'none'; be.innerHTML = '';
     alert('Bracket enregistré.');
   });
@@ -3087,7 +3163,7 @@ document.getElementById('btn-reset-give-image').addEventListener('click', ()=>{
   document.getElementById('give-image-file').value = '';
 });
 document.getElementById('btn-cancel-give').addEventListener('click', resetGiveForm);
-document.getElementById('btn-save-give').addEventListener('click', ()=>{
+document.getElementById('btn-save-give').addEventListener('click', async ()=>{
   const title = document.getElementById('give-title').value.trim();
   if(!title){ alert('Le titre est obligatoire.'); return; }
   const obj = {
@@ -3111,13 +3187,17 @@ document.getElementById('btn-save-give').addEventListener('click', ()=>{
     conditions: document.getElementById('give-conditions').value.trim()
   };
   const editId = document.getElementById('give-edit-id').value;
+  let targetId = editId;
   if(editId){
     const g = data.giveaways.find(x=>x.id===editId);
     if(g) Object.assign(g, obj);
   } else {
-    data.giveaways.unshift(Object.assign({ id:uid('g') }, obj));
+    targetId = uid('g');
+    data.giveaways.unshift(Object.assign({ id:targetId }, obj));
   }
   saveData(); renderAll(); renderAdminLists(); renderAdminDashboard(); resetGiveForm();
+  if(!editId) obj.createdAt = Date.now();
+  await fsSaveDoc('giveaways', targetId, obj);
 });
 
 /* ---------- ADMIN: équipage CRUD ---------- */
@@ -3164,7 +3244,7 @@ function editMember(id){
   window.scrollTo({top:document.getElementById('admin-form-equipage').offsetTop-90, behavior:'smooth'});
 }
 document.getElementById('btn-cancel-member').addEventListener('click', resetMemberForm);
-document.getElementById('btn-save-member').addEventListener('click', ()=>{
+document.getElementById('btn-save-member').addEventListener('click', async ()=>{
   const name = document.getElementById('member-name').value.trim();
   if(!name){ alert('Le pseudo est obligatoire.'); return; }
   const obj = {
@@ -3175,13 +3255,17 @@ document.getElementById('btn-save-member').addEventListener('click', ()=>{
     icon: document.getElementById('member-icon-data').value || ''
   };
   const editId = document.getElementById('member-edit-id').value;
+  let targetId = editId;
   if(editId){
     const m = data.equipage.find(x=>x.id===editId);
     if(m) Object.assign(m, obj);
   } else {
-    data.equipage.push(Object.assign({ id:uid('m') }, obj));
+    targetId = uid('m');
+    data.equipage.push(Object.assign({ id:targetId }, obj));
   }
   saveData(); renderAll(); renderAdminLists(); renderAdminDashboard(); resetMemberForm();
+  if(!editId) obj.createdAt = Date.now();
+  await fsSaveDoc('equipage', targetId, obj);
 });
 
 
