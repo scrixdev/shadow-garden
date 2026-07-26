@@ -1268,13 +1268,8 @@ nav{
           <input type="hidden" id="member-edit-id">
           <div><label>Pseudo</label><input type="text" id="member-name" placeholder="Ex : Blox"></div>
           <div><label>Rôle</label><input type="text" id="member-role" placeholder="Ex : Fondateur / Admin / Modérateur"></div>
-          <div><label>Origine</label><input type="text" id="member-origin" placeholder="Ex : Shadow Garden" value="Shadow Garden"></div>
-          <div><label>Statut</label>
-            <select id="member-status">
-              <option value="En ligne">En ligne</option>
-              <option value="Hors ligne">Hors ligne</option>
-            </select>
-          </div>
+          <div><label>Équipage</label><input type="text" id="member-origin" placeholder="Ex : Shadow Garden" value="Shadow Garden"></div>
+          <div><label>Bounty</label><input type="text" id="member-status" placeholder="Ex : 30M"></div>
           <div class="full">
             <label>Icône de carte (optionnel — par défaut : tête de loup)</label>
             <label class="upload-zone" for="member-icon-file" style="padding:1.5rem">
@@ -1363,12 +1358,12 @@ const DEFAULT_DATA = {
     { id:"g2", day:"06", month:"AOÛT", title:"Pack de skins Valorant", desc:"Un giveaway spécial pour célébrer le nouveau tournoi Valorant : pack de skins exclusifs à gagner.", prize:"Pack de skins Valorant", participants:88, progress:24, draw:"Tirage dans 11 jours" }
   ],
   equipage: [
-    { id:"m1", name:"Blox", role:"Fondateur", origin:"Shadow Garden", status:"En ligne" },
-    { id:"m2", name:"Aria", role:"Admin", origin:"Shadow Garden", status:"En ligne" },
-    { id:"m3", name:"Nox", role:"Modérateur", origin:"Shadow Garden", status:"Hors ligne" },
-    { id:"m4", name:"Lya", role:"Modératrice", origin:"Shadow Garden", status:"En ligne" },
-    { id:"m5", name:"Kaze", role:"Collaborateur", origin:"Shadow Garden", status:"Hors ligne" },
-    { id:"m6", name:"Mia", role:"Collaboratrice", origin:"Shadow Garden", status:"En ligne" }
+    { id:"m1", name:"Blox", role:"Fondateur", origin:"Shadow Garden", status:"1.5Md" },
+    { id:"m2", name:"Aria", role:"Admin", origin:"Shadow Garden", status:"900M" },
+    { id:"m3", name:"Nox", role:"Modérateur", origin:"Shadow Garden", status:"400M" },
+    { id:"m4", name:"Lya", role:"Modératrice", origin:"Shadow Garden", status:"400M" },
+    { id:"m5", name:"Kaze", role:"Collaborateur", origin:"Shadow Garden", status:"150M" },
+    { id:"m6", name:"Mia", role:"Collaboratrice", origin:"Shadow Garden", status:"150M" }
   ]
 };
 
@@ -1788,7 +1783,7 @@ function renderEquipage(){
   // Membres ajoutés à la main dans le panel admin (3e ligne = "Statut")
   const manual = data.equipage.map(m => ({
     name: m.name, icon: m.icon, role: m.role, origin: m.origin,
-    statLabel: 'Statut', statValue: m.status, discordAvatar: false
+    statLabel: 'Bounty', statValue: m.status, discordAvatar: false
   }));
 
   // Membres inscrits via le formulaire /equipage du bot Discord (3e ligne = "Bounty")
@@ -1811,7 +1806,7 @@ function renderEquipage(){
           <div class="witcher-card-icon">${m.icon ? `<img src="${m.icon}" alt="" style="${m.discordAvatar ? 'border-radius:50%;object-fit:cover' : ''}">` : ICON_WOLF}</div>
           <div class="witcher-card-details">
             <div class="witcher-card-stat"><span>Rôle</span><span>${escapeHtml(m.role)}</span></div>
-            <div class="witcher-card-stat"><span>Origine</span><span>${escapeHtml(m.origin)}</span></div>
+            <div class="witcher-card-stat"><span>Équipage</span><span>${escapeHtml(m.origin)}</span></div>
             <div class="witcher-card-stat"><span>${escapeHtml(m.statLabel)}</span><span>${escapeHtml(m.statValue)}</span></div>
           </div>
         </div>
@@ -1920,7 +1915,7 @@ try{
       name: m.displayName || m.username || m.robloxPseudo || 'Membre',
       icon: m.avatar || '',
       role: m.role || 'Membre',
-      origin: m.origin || 'Équipage',
+      origin: m.origin || 'Shadow Garden',
       bounty: m.bounty || ''
     };
   }
@@ -2174,7 +2169,7 @@ function renderAdminLists(){
     <div class="admin-list-item">
       <div class="admin-list-item-info">
         <div class="admin-list-item-title">${escapeHtml(m.name)}</div>
-        <div class="admin-list-item-sub">${escapeHtml(m.role)} · ${escapeHtml(m.status)}</div>
+        <div class="admin-list-item-sub">${escapeHtml(m.role)} · Bounty : ${escapeHtml(m.status)}</div>
       </div>
       <div class="admin-list-item-actions">
         <button class="edit" data-edit-member="${m.id}">Modifier</button>
@@ -2188,7 +2183,7 @@ function renderAdminLists(){
       <div class="admin-list-item">
         <div class="admin-list-item-info">
           <div class="admin-list-item-title">${escapeHtml(m.name)}<span class="discord-tag">DISCORD</span></div>
-          <div class="admin-list-item-sub">Bounty : ${escapeHtml(m.bounty)} · Origine : ${escapeHtml(m.origin)}</div>
+          <div class="admin-list-item-sub">Bounty : ${escapeHtml(m.bounty)} · Équipage : ${escapeHtml(m.origin)}</div>
         </div>
         <div class="admin-list-item-actions">
           <select class="role-edit-input" data-role-id="${escapeHtml(m.id)}">
@@ -2628,7 +2623,7 @@ function resetMemberForm(){
   document.getElementById('member-name').value = '';
   document.getElementById('member-role').value = '';
   document.getElementById('member-origin').value = 'Shadow Garden';
-  document.getElementById('member-status').value = 'En ligne';
+  document.getElementById('member-status').value = '';
   document.getElementById('member-icon-file').value = '';
   setMemberIconPreview('');
   document.getElementById('btn-save-member').textContent = "Ajouter le membre";
