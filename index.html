@@ -1728,6 +1728,10 @@ function goPage(page){
   if(mainNav) mainNav.style.display = (page === 'admin' || page === 'login' || page === 'loading') ? 'none' : '';
   window.scrollTo({top:0,behavior:'smooth'});
 }
+// Le loader est actif par défaut dans le HTML, mais on repasse quand même par
+// goPage() ici pour être sûr que la nav du bas soit bien masquée dès le départ
+// (goPage() est la seule fonction qui gère l'affichage/masquage de #main-nav).
+goPage('loading');
 document.querySelectorAll('.npb[data-page]').forEach(b=>{
   b.addEventListener('click', ()=>goPage(b.dataset.page));
 });
