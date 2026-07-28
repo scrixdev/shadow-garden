@@ -1542,6 +1542,9 @@ nav{
         </div>
         <div class="admin-list" id="admin-list-tournois"></div>
         <div class="admin-form" id="admin-bracket-editor" style="display:none;margin-top:1.2rem"></div>
+
+        <div class="admin-panel-title" style="margin-top:2rem;font-size:1rem">PARTICIPANTS INSCRITS VIA DISCORD (bouton « Rejoindre »)</div>
+        <div class="admin-list" id="admin-list-tournois-discord"></div>
       </div>
 
       <!-- GIVEAWAYS -->
@@ -1580,6 +1583,9 @@ nav{
           </div>
         </div>
         <div class="admin-list" id="admin-list-giveaways"></div>
+
+        <div class="admin-panel-title" style="margin-top:2rem;font-size:1rem">PARTICIPANTS INSCRITS VIA DISCORD (bouton « Participer »)</div>
+        <div class="admin-list" id="admin-list-giveaways-discord"></div>
       </div>
 
       <!-- EQUIPAGE -->
@@ -2347,6 +2353,7 @@ try{
 
       discordGiveaways = snap.docs.map(firestoreDocToGiveaway);
       renderGiveaways();
+      renderAdminLists();
 
       snap.docs.forEach(doc => {
         const unsub = doc.ref.collection('participants').orderBy('joinedAt', 'asc')
@@ -2359,6 +2366,7 @@ try{
               return { name: d.displayName || d.username || 'Participant', avatar: d.avatar || '' };
             });
             renderGiveaways();
+            renderAdminLists();
           }, err => console.error('Firestore (participants giveaway) :', err));
         giveawayParticipantUnsubs.push(unsub);
       });
@@ -2868,6 +2876,40 @@ function renderAdminLists(){
         <button class="del" data-del-give="${g.id}">Supprimer</button>
       </div>
     </div>`).join('') : '<div class="admin-empty">Aucun giveaway pour le moment.</div>';
+
+  const tourDiscordList = document.getElementById('admin-list-tournois-discord');
+  if(tourDiscordList){
+    const tourRows = [];
+    data.tournois.forEach(t => {
+      (t.participants||[]).forEach(p => {
+        tourRows.push({ event: t.title, name: p.displayName || p.username || 'Participant' });
+      });
+    });
+    tourDiscordList.innerHTML = tourRows.length ? tourRows.map(r => `
+      <div class="admin-list-item">
+        <div class="admin-list-item-info">
+          <div class="admin-list-item-title">${escapeHtml(r.name)}<span class="discord-tag">DISCORD</span></div>
+          <div class="admin-list-item-sub">Tournoi : ${escapeHtml(r.event)}</div>
+        </div>
+      </div>`).join('') : '<div class="admin-empty">Personne n\'a encore rejoint un tournoi via Discord.</div>';
+  }
+
+  const giveDiscordList = document.getElementById('admin-list-giveaways-discord');
+  if(giveDiscordList){
+    const giveRows = [];
+    (discordGiveaways||[]).forEach(g => {
+      (g.participantsList||[]).forEach(p => {
+        giveRows.push({ event: g.title, name: p.name || 'Participant' });
+      });
+    });
+    giveDiscordList.innerHTML = giveRows.length ? giveRows.map(r => `
+      <div class="admin-list-item">
+        <div class="admin-list-item-info">
+          <div class="admin-list-item-title">${escapeHtml(r.name)}<span class="discord-tag">DISCORD</span></div>
+          <div class="admin-list-item-sub">Giveaway : ${escapeHtml(r.event)}</div>
+        </div>
+      </div>`).join('') : '<div class="admin-empty">Personne n\'a encore participé à un giveaway via Discord.</div>';
+  }
 
   const memberList = document.getElementById('admin-list-equipage');
   memberList.innerHTML = data.equipage.length ? data.equipage.map(m => `
